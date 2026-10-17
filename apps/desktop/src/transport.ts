@@ -54,9 +54,13 @@ class TauriTransport implements Transport {
       else onEvent(msg as ServerEvent);
     };
     await invoke("orc_events_subscribe", { channel: chan });
-    return () => {
-      invoke("orc_events_unsubscribe").catch(() => {});
-    };
+    // Do NOT invoke orc_events_unsubscribe here: under StrictMode
+    // double-mounts the async command can land AFTER the second
+    // subscribe and abort the live task (commands run concurrently;
+    // the daemon task has no generation guard). Orphaned tasks
+    // self-terminate — channel.send fails once this channel is gone,
+    // and the next subscribe aborts the previous handle.
+    return () => {};
   }
 }
 
