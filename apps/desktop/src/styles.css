@@ -228,7 +228,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .chip .pulse { width: 7px; height: 7px; border-radius: 50%; }
 .chip.running .pulse { background: var(--good); box-shadow: 0 0 8px var(--good); animation: pulse 1.6s infinite; }
 .chip.attention .pulse { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
-.chip.dead .pulse { background: var(--ink-3); }
+.chip.inactive .pulse { background: var(--ink-3); }
 .chip.error .pulse { background: var(--bad); }
 @keyframes pulse { 50% { opacity: 0.35; } }
 

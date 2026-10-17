@@ -58,7 +58,7 @@ function SessionCard({ s, attention }: { s: Session; attention: { id: string }[]
     s.state === "running" ? "running"
     : s.state.startsWith("waiting") ? "attention"
     : s.state === "failed" || s.state === "unknown" ? "error"
-    : "dead";
+    : "inactive";
 
   const elapsed = s.activity_started_at ? fmtElapsed(s.activity_started_at) : null;
   const canSend = s.capabilities.send.type === "supported" && s.state !== "starting";
