@@ -1,0 +1,37 @@
+[package]
+name = "orcd"
+description = "The Orc orchestration daemon — sessions, policy, persistence, IPC"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "orcd"
+path = "src/main.rs"
+
+[dependencies]
+orc-domain.workspace = true
+orc-storage.workspace = true
+orc-adapters.workspace = true
+orc-runtime.workspace = true
+orc-orchestrator.workspace = true
+orc-ipc.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
+clap.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+directories.workspace = true
+anyhow.workspace = true
+ts-rs.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tempfile = "3"

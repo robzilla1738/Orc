@@ -1,0 +1,22 @@
+runs-on: macos
+# Commands run from the repo root.
+initialize: |
+  pnpm --dir apps/desktop install
+maintenance: |
+  cargo fetch
+  pnpm --dir apps/desktop install
+knowledge:
+  - name: test
+    contents: |
+      cargo test --workspace
+  - name: lint
+    contents: |
+      cargo fmt --all --check && cargo clippy --workspace --all-targets
+  - name: build
+    contents: |
+      cargo build --workspace && pnpm --dir apps/desktop build
+  - name: run
+    contents: |
+      ./target/debug/orcd --runtime-dir /tmp/orc-dev --mock-model
+      ./target/debug/orc --runtime-dir /tmp/orc-dev doctor
+      pnpm --dir apps/desktop tauri dev

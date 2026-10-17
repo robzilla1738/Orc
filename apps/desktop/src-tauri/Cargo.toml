@@ -1,0 +1,23 @@
+[package]
+name = "orc-desktop"
+version = "0.1.0"
+edition = "2021"
+description = "Orc — local AI session manager"
+license = "MIT OR Apache-2.0"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+orc-domain = { path = "../../../crates/domain" }
+orc-ipc = { path = "../../../crates/ipc" }
+
+[features]
+# Dev builds read the frontend from vite; release builds embed dist/.
+custom-protocol = ["tauri/custom-protocol"]
