@@ -1,0 +1,24 @@
+[package]
+name = "orc-storage"
+description = "SQLite event log + current-state projections for the Orc daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+orc-domain.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+sqlx.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+tokio = { workspace = true, features = ["fs", "io-util"] }
+ts-rs.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tempfile = "3"

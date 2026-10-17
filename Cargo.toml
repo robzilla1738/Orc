@@ -1,0 +1,94 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/domain",
+    "crates/ipc",
+    "crates/storage",
+    "crates/adapters",
+    "crates/runtime",
+    "crates/orchestrator",
+    "crates/daemon",
+    "crates/cli",
+    "tests/fake-providers",
+    "apps/desktop/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/robzilla1738/Orc"
+
+[workspace.dependencies]
+# internal
+orc-domain = { path = "crates/domain" }
+orc-ipc = { path = "crates/ipc" }
+orc-storage = { path = "crates/storage" }
+orc-adapters = { path = "crates/adapters" }
+orc-runtime = { path = "crates/runtime" }
+orc-orchestrator = { path = "crates/orchestrator" }
+
+# async
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+futures = "0.3"
+futures-util = "0.3"
+async-trait = "0.1"
+
+# serialization + types
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "0.8"
+ts-rs = { version = "10", features = ["chrono-impl", "serde-json-impl"] }
+
+# errors + logging
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# persistence
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "sqlite",
+    "chrono",
+    "uuid",
+    "json",
+    "migrate",
+] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+
+# process / ipc
+interprocess = { version = "2", features = ["tokio"] }
+portable-pty = "0.9"
+sysinfo = "0.33"
+which = "7"
+
+# cli
+clap = { version = "4", features = ["derive", "cargo"] }
+
+# http
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "stream",
+    "rustls-tls",
+] }
+
+# misc
+directories = "6"
+shlex = "1"
+anyhow = "1"
+parking_lot = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+rand = "0.9"
+pin-project-lite = "0.2"
+
+[profile.dev]
+incremental = true
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

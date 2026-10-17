@@ -1,0 +1,24 @@
+[package]
+name = "orc"
+description = "Headless control + diagnostics for the Orc daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "orc"
+path = "src/main.rs"
+
+[dependencies]
+orc-domain.workspace = true
+orc-ipc.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+which.workspace = true
+ts-rs.workspace = true

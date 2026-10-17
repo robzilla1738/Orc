@@ -1,0 +1,26 @@
+[package]
+name = "orc-fake-agent"
+description = "Deterministic fake agent executables for failure-injection tests"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "orc-fake-agent"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+orc-domain.workspace = true
+orc-adapters.workspace = true
+orc-runtime.workspace = true
+orc-storage.workspace = true
+serde_json.workspace = true
+tempfile = "3"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+chrono.workspace = true
