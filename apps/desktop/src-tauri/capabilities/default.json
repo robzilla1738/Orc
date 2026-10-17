@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Orc main window — daemon bridge only",
   "windows": ["main"],
-  "permissions": ["core:default", "core:tray:default"]
+  "permissions": ["core:default", "core:tray:default", "core:window:allow-start-dragging"]
 }

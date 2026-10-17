@@ -18,7 +18,7 @@ export interface Usage {
   input_tokens: number | null;
   output_tokens: number | null;
   cost_usd: number | null;
-  source: "provider" | "estimate" | "unavailable";
+  source: "provider_reported" | "estimated" | "unavailable";
 }
 
 export interface Capabilities {
@@ -149,12 +149,8 @@ export interface Task {
   updated_at: string;
 }
 
-export type ToolReadiness =
-  | { type: "ready" }
-  | { type: "installed_unauthenticated" }
-  | { type: "installed_unprobed" }
-  | { type: "incompatible"; reason: string }
-  | { type: "missing" };
+/** Installed → Compatible → Authenticated → Ready; each is a separate fact. */
+export type ToolReadiness = "installed" | "compatible" | "authenticated" | "ready";
 
 export interface ToolInstance {
   id: Id;

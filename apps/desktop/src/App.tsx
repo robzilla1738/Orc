@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Orbit, Unplug } from "lucide-react";
 import { useSnapshot } from "./api";
 import { ChatView } from "./components/ChatView";
 import { InboxView } from "./components/InboxView";
@@ -13,30 +14,33 @@ const qc = new QueryClient({
 
 function Shell() {
   const { data: snap, isLoading, isError } = useSnapshot();
-  const { view, inspectorOpen, selectedSession } = useUi();
+  const { view, selectedSession } = useUi();
+  const inspected = view === "live" && snap ? snap.sessions.find((s) => s.id === selectedSession) : undefined;
 
   return (
     <div className="app">
-      {snap && <Sidebar snap={snap} />}
-      <div className="main">
+      {snap ? <Sidebar snap={snap} /> : <aside className="sidebar"><div className="titlebar drag" data-tauri-drag-region /></aside>}
+      <main className="main">
         <div className="content">
-          {isLoading && <div className="empty"><div className="big">Connecting…</div></div>}
-          {isError && (
+          {isLoading && (
             <div className="empty">
-              <div className="big">Daemon unreachable</div>
-              <div>Start <code>orcd</code> and reopen Orc — your work keeps running either way.</div>
+              <span className="avatar"><Orbit size={18} /></span>
+              <div className="title">Connecting to orcd…</div>
             </div>
           )}
-          {snap && (
-            <>
-              {view === "chat" && <ChatView />}
-              {view === "live" && <LiveView snap={snap} />}
-              {view === "inbox" && <InboxView snap={snap} />}
-            </>
+          {isError && (
+            <div className="empty">
+              <span className="avatar"><Unplug size={18} /></span>
+              <div className="title">Daemon unreachable</div>
+              <div className="body">Start <span className="mono">orcd</span> and reopen Orc. Agents keep running either way.</div>
+            </div>
           )}
+          {snap && view === "chat" && <ChatView />}
+          {snap && view === "live" && <LiveView snap={snap} />}
+          {snap && view === "inbox" && <InboxView snap={snap} />}
         </div>
-        {snap && (inspectorOpen || selectedSession) && <Inspector snap={snap} />}
-      </div>
+        {inspected && <Inspector key={inspected.id} s={inspected} />}
+      </main>
     </div>
   );
 }

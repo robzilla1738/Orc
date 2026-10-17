@@ -153,9 +153,9 @@ class DemoTransport implements Transport {
     ],
     tasks: [],
     tools: [
-      { id: "tool_codex", provider: "codex", label: "Codex CLI", executable: "codex", version: "0.42.0", readiness: { type: "ready" }, settings: {} },
-      { id: "tool_claude", provider: "claude", label: "Claude Code", executable: "claude", version: "2.0.0", readiness: { type: "installed_unauthenticated" }, settings: {} },
-      { id: "tool_pty", provider: "pty", label: "Terminal", executable: "bash", version: null, readiness: { type: "ready" }, settings: {} },
+      { id: "tool_codex", provider: "codex", label: "Codex CLI", executable: "codex", version: "0.42.0", readiness: "ready", settings: {} },
+      { id: "tool_claude", provider: "claude", label: "Claude Code", executable: "claude", version: "2.0.0", readiness: "installed", settings: {} },
+      { id: "tool_pty", provider: "pty", label: "Terminal", executable: "bash", version: null, readiness: "ready", settings: {} },
     ],
     workspaces: [{ id: "ws_demo", name: "Orc", root: "~/repos/Orc", allow_rules: [], network_allowed: false, remote_content_allowed: true }],
     pending_commands: [],

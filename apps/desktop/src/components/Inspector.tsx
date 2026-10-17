@@ -1,103 +1,109 @@
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Check, CircleHelp, Minus, X } from "lucide-react";
 import { useTranscript } from "../api";
 import { useUi } from "../store";
-import type { Session, Snapshot } from "../types";
-import { fmtElapsed } from "./LiveView";
+import type { Capabilities, Session, Support } from "../types";
+import { PROVIDER_LABEL, ProviderAvatar, StateChip, fmtElapsed } from "./ui";
 
-export function Inspector({ snap }: { snap: Snapshot }) {
-  const { selectedSession, inspectorOpen, toggleInspector } = useUi();
-  const session = snap.sessions.find((s) => s.id === selectedSession) ?? null;
-  const transcript = useTranscript(inspectorOpen ? selectedSession : null);
+const CAPS: [keyof Capabilities, string][] = [
+  ["mid_turn_steer", "Steer"],
+  ["cancel", "Cancel"],
+  ["resume", "Resume"],
+  ["fork", "Fork"],
+  ["reconnect", "Reconnect"],
+  ["streaming", "Streaming"],
+  ["structured_approvals", "Approvals"],
+  ["structured_questions", "Questions"],
+  ["usage_reporting", "Usage"],
+  ["artifact_reporting", "Artifacts"],
+  ["list_sessions", "List"],
+  ["import_session", "Import"],
+];
 
-  if (!inspectorOpen) {
-    return (
-      <div style={{ padding: 14 }}>
-        <button className="pill ghost icon" onClick={toggleInspector} title="Show inspector">
-          <PanelRightOpen size={16} />
-        </button>
-      </div>
-    );
-  }
+const USAGE_SOURCE: Record<string, string> = {
+  provider_reported: "Reported by provider",
+  estimated: "Estimated",
+  unavailable: "Unavailable",
+};
+
+export function Inspector({ s }: { s: Session }) {
+  const { selectSession } = useUi();
+  const transcript = useTranscript(s.id);
 
   return (
-    <div className="inspector">
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div className="sec-label" style={{ flex: 1 }}>Inspector</div>
-        <button className="pill ghost icon" onClick={toggleInspector}>
-          <PanelRightClose size={16} />
+    <aside className="inspector">
+      <div className="head">
+        <ProviderAvatar s={s} />
+        <div className="who">
+          <div className="title">{s.title}</div>
+          <div className="meta">{PROVIDER_LABEL[s.provider]} · {s.ownership}</div>
+        </div>
+        <button className="icon-btn" onClick={() => selectSession(null)} aria-label="Close inspector">
+          <X size={15} />
         </button>
       </div>
-      {!session ? (
-        <div style={{ color: "var(--ink-3)", fontSize: "var(--fs-s)" }}>
-          Select a session to see its process, usage, and transcript.
+
+      <div className="scroll">
+        <div>
+          <div style={{ marginBottom: 10 }}><StateChip state={s.state} /></div>
+          <Kv k="Session" v={s.id} mono />
+          {s.native_id && <Kv k="Native ID" v={s.native_id} mono />}
+          {s.pid != null && <Kv k="PID" v={String(s.pid)} mono />}
+          {s.activity_started_at && <Kv k="Active for" v={fmtElapsed(s.activity_started_at)} />}
+          <Kv k="Updated" v={new Date(s.updated_at).toLocaleTimeString()} />
         </div>
-      ) : (
-        <Details s={session} transcript={transcript.data?.text ?? ""} loading={transcript.isLoading} />
-      )}
+
+        <div>
+          <div className="label">Capabilities</div>
+          <div className="caps">
+            {CAPS.map(([key, label]) => <Cap key={key} label={label} v={s.capabilities[key]} />)}
+          </div>
+        </div>
+
+        {s.usage && (
+          <div>
+            <div className="label">Usage <span style={{ fontWeight: 400 }}>· {USAGE_SOURCE[s.usage.source] ?? s.usage.source}</span></div>
+            <div className="usage">
+              <div className="stat"><div className="n">{fmtN(s.usage.input_tokens)}</div><div className="l">Input tokens</div></div>
+              <div className="stat"><div className="n">{fmtN(s.usage.output_tokens)}</div><div className="l">Output tokens</div></div>
+              {s.usage.cost_usd != null && (
+                <div className="stat"><div className="n">${s.usage.cost_usd.toFixed(4)}</div><div className="l">Cost</div></div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <div className="label">Output</div>
+          <pre className="transcript">
+            {transcript.isLoading ? "Loading…" : transcript.data?.text || "No output captured yet."}
+          </pre>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function Kv({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
+  return (
+    <div className="kv">
+      <span className="k">{k}</span>
+      <span className={`v selectable ${mono ? "mono" : ""}`} title={v}>{v}</span>
     </div>
   );
 }
 
-function Details({ s, transcript, loading }: { s: Session; transcript: string; loading: boolean }) {
+function Cap({ label, v }: { label: string; v: Support }) {
+  const tip =
+    v.status === "supported" ? v.constraint ?? "Supported"
+    : v.status === "unsupported" ? v.reason
+    : "Not yet negotiated with this provider";
+  const cls = v.status === "supported" ? "" : v.status === "unsupported" ? "no" : "unknown";
   return (
-    <>
-      <div>
-        <div style={{ fontWeight: 600, marginBottom: 6 }}>{s.title}</div>
-        <Kv k="state" v={s.state.replaceAll("_", " ")} />
-        <Kv k="provider" v={`${s.provider} · ${s.ownership}`} />
-        <Kv k="session" v={s.id} />
-        {s.native_id && <Kv k="native id" v={s.native_id} />}
-        {s.pid != null && <Kv k="pid" v={String(s.pid)} />}
-        {s.activity_started_at && <Kv k="active for" v={fmtElapsed(s.activity_started_at)} />}
-        <Kv k="updated" v={new Date(s.updated_at).toLocaleTimeString()} />
-      </div>
-
-      <div>
-        <div className="sec-label">Capabilities</div>
-        <Cap k="send / steer" v={s.capabilities.mid_turn_steer} />
-        <Cap k="cancel" v={s.capabilities.cancel} />
-        <Cap k="resume" v={s.capabilities.resume} />
-        <Cap k="fork" v={s.capabilities.fork} />
-        <Cap k="reconnect" v={s.capabilities.reconnect} />
-        <Cap k="streaming" v={s.capabilities.streaming} />
-        <Cap k="approvals" v={s.capabilities.structured_approvals} />
-        <Cap k="questions" v={s.capabilities.structured_questions} />
-        <Cap k="usage" v={s.capabilities.usage_reporting} />
-        <Cap k="artifacts" v={s.capabilities.artifact_reporting} />
-        <Cap k="list" v={s.capabilities.list_sessions} />
-        <Cap k="import" v={s.capabilities.import_session} />
-      </div>
-
-      {s.usage && (
-        <div>
-          <div className="sec-label">Usage ({s.usage.source})</div>
-          <Kv k="input" v={fmtN(s.usage.input_tokens)} />
-          <Kv k="output" v={fmtN(s.usage.output_tokens)} />
-          {s.usage.cost_usd != null && <Kv k="cost" v={`$${s.usage.cost_usd.toFixed(4)}`} />}
-        </div>
-      )}
-
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div className="sec-label">Transcript tail</div>
-        <pre>{loading ? "loading…" : transcript || "—"}</pre>
-      </div>
-    </>
-  );
-}
-
-function Kv({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="kv"><span className="k">{k}</span><span className="v">{v}</span></div>
-  );
-}
-
-function Cap({ k, v }: { k: string; v: { status: string; reason?: string; constraint?: string | null } }) {
-  const label = v.status === "supported" ? "yes" : v.status === "unsupported" ? "no" : "?";
-  const color = v.status === "supported" ? "var(--good)" : v.status === "unsupported" ? "var(--ink-3)" : "var(--warn)";
-  return (
-    <div className="kv">
-      <span className="k">{k}</span>
-      <span className="v" style={{ color }}>{label}{v.constraint ? ` · ${v.constraint}` : ""}</span>
+    <div className={`cap ${cls}`} title={tip}>
+      {v.status === "supported" ? <Check size={13} strokeWidth={2.2} />
+        : v.status === "unsupported" ? <Minus size={13} />
+        : <CircleHelp size={13} />}
+      {label}
     </div>
   );
 }

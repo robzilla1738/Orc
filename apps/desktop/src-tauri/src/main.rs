@@ -181,17 +181,17 @@ fn main() {
             orc_events_unsubscribe
         ])
         .setup(|app| {
-            // Translucent window material — the desktop blurs through the
-            // chrome, matching the design language. (NSGlassEffectView washes
-            // out webview text on this stack; UnderWindowBackground keeps
-            // the same look with readable content.)
+            // The window itself is the material: macOS sidebar vibrancy, so
+            // the wallpaper tints the chrome while the content canvas stays
+            // opaque. (NSGlassEffectView frosts the webview's own content on
+            // this stack, so it is not used.)
             if let Some(w) = app.get_webview_window("main") {
                 #[cfg(target_os = "macos")]
                 {
                     use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
                     let _ = apply_vibrancy(
                         &w,
-                        NSVisualEffectMaterial::UnderWindowBackground,
+                        NSVisualEffectMaterial::Sidebar,
                         None,
                         None,
                     );
