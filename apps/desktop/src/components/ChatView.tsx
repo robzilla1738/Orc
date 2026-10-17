@@ -1,3 +1,4 @@
+import { ArrowUp, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useChatHistory, useSendChat } from "../api";
 import type { ChatMessage, OperationCard } from "../types";
@@ -25,7 +26,7 @@ export function ChatView() {
     <>
       <div className="topbar">
         <h1>Chat</h1>
-        <span className="chip"><span className="pulse" style={{ background: "var(--accent)" }} />orchestrator</span>
+        <span className="chip"><Sparkles size={12} />orchestrator</span>
       </div>
       <div className="chat-scroll scroll-fade" ref={scrollRef}>
         {messages.map((m) => <Message key={m.id} m={m} />)}
@@ -55,8 +56,8 @@ export function ChatView() {
             }
           }}
         />
-        <button className="pill primary" onClick={submit} disabled={send.isPending || !text.trim()}>
-          Send
+        <button className="send-btn" onClick={submit} disabled={send.isPending || !text.trim()} aria-label="Send">
+          <ArrowUp size={17} strokeWidth={2.4} />
         </button>
       </div>
     </>

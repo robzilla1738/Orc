@@ -1,3 +1,4 @@
+import { Activity, Inbox, MessageCircle, Orbit } from "lucide-react";
 import { useUi } from "../store";
 import { transport } from "../transport";
 import type { Snapshot } from "../types";
@@ -11,21 +12,22 @@ export function Sidebar({ snap }: { snap: Snapshot }) {
 
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="dot" />Orc</div>
+      <div className="brand"><span className="mark"><Orbit size={14} strokeWidth={2.2} /></span>Orc</div>
       <div className={`conn ${transport.label === "demo" ? "demo" : ""}`}>
+        <span className="dot" />
         {transport.label === "demo" ? "demo mode — daemon not connected" : "daemon connected"}
       </div>
 
       <nav className="nav">
         <button className={`nav-item ${view === "chat" ? "active" : ""}`} onClick={() => setView("chat")}>
-          Chat
+          <MessageCircle size={15} />Chat
         </button>
         <button className={`nav-item ${view === "live" ? "active" : ""}`} onClick={() => setView("live")}>
-          Live
+          <Activity size={15} />Live
           {active.length > 0 && <span className="count">{active.length}</span>}
         </button>
         <button className={`nav-item ${view === "inbox" ? "active" : ""}`} onClick={() => setView("inbox")}>
-          Attention
+          <Inbox size={15} />Attention
           {openAttention > 0 && <span className="count">{openAttention}</span>}
         </button>
       </nav>
@@ -52,8 +54,8 @@ export function Sidebar({ snap }: { snap: Snapshot }) {
         <div className="side-list">
           {snap.tools.map((t) => (
             <div key={t.id} className="side-row" style={{ cursor: "default" }}>
-              <span className="dot" style={{
-                width: 7, height: 7, borderRadius: "50%",
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
                 background: t.readiness.type === "ready" ? "var(--good)" : "var(--warn)",
               }} />
               <span>{t.label}</span>

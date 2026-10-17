@@ -181,14 +181,34 @@ fn main() {
             orc_events_unsubscribe
         ])
         .setup(|app| {
+            // Translucent window material — the desktop blurs through the
+            // chrome, matching the design language. (NSGlassEffectView washes
+            // out webview text on this stack; UnderWindowBackground keeps
+            // the same look with readable content.)
+            if let Some(w) = app.get_webview_window("main") {
+                #[cfg(target_os = "macos")]
+                {
+                    use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+                    let _ = apply_vibrancy(
+                        &w,
+                        NSVisualEffectMaterial::UnderWindowBackground,
+                        None,
+                        None,
+                    );
+                }
+            }
             let show = MenuItem::with_id(app, "show", "Show Orc", true, None::<&str>)?;
             let quit =
                 MenuItem::with_id(app, "quit", "Quit (work keeps running)", true, None::<&str>)?;
             let stop = MenuItem::with_id(app, "stop", "Stop all work & quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &quit, &stop])?;
-            TrayIconBuilder::new()
+            let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("Orc")
+                .tooltip("Orc");
+            if let Some(icon) = app.default_window_icon() {
+                tray = tray.icon(icon.clone());
+            }
+            tray
                 .on_menu_event(|app, ev| match ev.id.as_ref() {
                     "show" => {
                         if let Some(w) = app.get_webview_window("main") {
@@ -224,6 +244,15 @@ fn main() {
                 let _ = window.hide();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Orc");
+        .build(tauri::generate_context!())
+        .expect("error while building Orc")
+        .run(|app, event| {
+            // Dock click restores a hidden window — same as tray "Show Orc".
+            if let tauri::RunEvent::Reopen { .. } = event {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+        });
 }

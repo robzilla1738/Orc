@@ -1,6 +1,7 @@
+import { Play, SendHorizontal, Square, Wand2 } from "lucide-react";
 import { cancelSession, resumeSession, sendSessionMessage, useCommand } from "../api";
 import { useUi } from "../store";
-import type { Session, Snapshot } from "../types";
+import { isSupported, type Session, type Snapshot } from "../types";
 import { StateDot } from "./Sidebar";
 import { useState } from "react";
 
@@ -61,9 +62,9 @@ function SessionCard({ s, attention }: { s: Session; attention: { id: string }[]
     : "inactive";
 
   const elapsed = s.activity_started_at ? fmtElapsed(s.activity_started_at) : null;
-  const canSend = s.capabilities.send.type === "supported" && s.state !== "starting";
-  const canCancel = s.capabilities.cancel.type === "supported" && ACTIVE.includes(s.state);
-  const canResume = s.capabilities.resume.type === "supported" && !ACTIVE.includes(s.state);
+  const canSend = isSupported(s.capabilities.mid_turn_steer) && s.state !== "starting";
+  const canCancel = isSupported(s.capabilities.cancel) && ACTIVE.includes(s.state);
+  const canResume = isSupported(s.capabilities.resume) && !ACTIVE.includes(s.state);
 
   return (
     <div
@@ -88,7 +89,7 @@ function SessionCard({ s, attention }: { s: Session; attention: { id: string }[]
 
       {s.status_detail && (
         <span className={s.status_detail.kind === "fact" ? "badge-fact" : "badge-inference"}>
-          {s.status_detail.kind === "inference" ? "⬦ " : ""}{s.status_detail.message}
+          {s.status_detail.kind === "inference" && <Wand2 size={11} />}{s.status_detail.message}
         </span>
       )}
 
@@ -99,8 +100,6 @@ function SessionCard({ s, attention }: { s: Session; attention: { id: string }[]
           <>
             <input
               type="text"
-              className="pill ghost"
-              style={{ flex: 1, minWidth: 0, background: "rgba(0,0,0,0.25)", outline: "none" }}
               placeholder="message…"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -116,18 +115,18 @@ function SessionCard({ s, attention }: { s: Session; attention: { id: string }[]
               disabled={busy || !draft.trim()}
               onClick={() => { command.mutate(sendSessionMessage(s.id, draft.trim())); setDraft(""); }}
             >
-              Send
+              <SendHorizontal size={12} />Send
             </button>
           </>
         )}
         {canCancel && (
           <button className="pill small danger" disabled={busy} onClick={() => command.mutate(cancelSession(s.id))}>
-            Stop
+            <Square size={11} />Stop
           </button>
         )}
         {canResume && (
           <button className="pill small" disabled={busy} onClick={() => command.mutate(resumeSession(s.id))}>
-            Resume
+            <Play size={11} />Resume
           </button>
         )}
       </div>

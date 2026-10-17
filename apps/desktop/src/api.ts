@@ -21,6 +21,24 @@ export function useSnapshot() {
     let cancelled = false;
     let unsubscribe: (() => void) | null = null;
     const onEvent = (e: ServerEvent) => {
+      const type = (e.payload as { type?: string }).type;
+      // Non-event-sourced notifications and chat rows: refetch rather
+      // than mirror — projections are authoritative in the daemon.
+      if (
+        type === "task_changed" || type === "workspace_changed" ||
+        type === "tool_changed"
+      ) {
+        qc.invalidateQueries({ queryKey: ["snapshot"] });
+        return;
+      }
+      if (type === "chat_message") {
+        qc.invalidateQueries({ queryKey: ["chat"] });
+        return;
+      }
+      if (type === "output_appended") {
+        qc.invalidateQueries({ queryKey: ["transcript"] });
+        return;
+      }
       qc.setQueryData<Snapshot>(["snapshot"], (snap) => (snap ? applyEvent(snap, e) : snap));
     };
     const onReset = () => qc.invalidateQueries({ queryKey: ["snapshot"] });
@@ -51,9 +69,14 @@ function applyEvent(snap: Snapshot, e: ServerEvent): Snapshot {
           ? {
               ...s,
               state: p.to ?? s.state,
-              status_detail: p.status_detail ?? null,
+              status_detail:
+                typeof p.reason === "string" && p.reason.length > 0
+                  ? {
+                      kind: p.inferred ? "inference" : "fact",
+                      message: p.reason,
+                    }
+                  : s.status_detail,
               updated_at: e.at,
-              activity_started_at: p.activity_started_at ?? s.activity_started_at,
             }
           : s,
       );
@@ -65,10 +88,10 @@ function applyEvent(snap: Snapshot, e: ServerEvent): Snapshot {
       next.sessions = [
         {
           id: sid,
-          workspace_id: p.workspace_id ?? "",
-          task_id: p.task_id ?? null,
-          tool_instance_id: p.tool_instance_id ?? "",
-          provider: p.provider ?? "other",
+          workspace_id: "",
+          task_id: null,
+          tool_instance_id: "",
+          provider: "other",
           ownership: p.ownership ?? "managed",
           native_id: null,
           title: p.title ?? "Untitled session",
@@ -78,6 +101,7 @@ function applyEvent(snap: Snapshot, e: ServerEvent): Snapshot {
           pid: null,
           last_meaningful_update: null,
           usage: null,
+          process_started_at: null,
           last_event_seq: e.seq,
           created_at: e.at,
           updated_at: e.at,
@@ -87,45 +111,65 @@ function applyEvent(snap: Snapshot, e: ServerEvent): Snapshot {
       ];
       return next;
     }
-    case "session_updated": {
+    case "session_update": {
       const sid = p.session_id as string;
       next.sessions = snap.sessions.map((s) =>
         s.id === sid
-          ? {
-              ...s,
-              last_meaningful_update: p.last_meaningful_update ?? s.last_meaningful_update,
-              usage: p.usage ?? s.usage,
-              updated_at: e.at,
-            }
+          ? { ...s, last_meaningful_update: p.summary ?? s.last_meaningful_update, updated_at: e.at }
           : s,
       );
       return next;
     }
-    case "attention_raised": {
-      const item = p.item;
-      next.attention = [item, ...snap.attention.filter((a) => a.id !== item.id)];
-      return next;
-    }
-    case "attention_resolved": {
-      const id = p.attention_id as string;
-      next.attention = snap.attention.map((a) =>
-        a.id === id ? { ...a, status: p.status ?? "answered" } : a,
+    case "session_usage": {
+      const sid = p.session_id as string;
+      next.sessions = snap.sessions.map((s) =>
+        s.id === sid ? { ...s, usage: p.usage ?? s.usage, updated_at: e.at } : s,
       );
       return next;
     }
-    case "tool_discovered": {
-      const tool = p.tool;
-      next.tools = [tool, ...snap.tools.filter((t) => t.id !== tool.id)];
+    case "session_native_id_assigned": {
+      const sid = p.session_id as string;
+      next.sessions = snap.sessions.map((s) =>
+        s.id === sid ? { ...s, native_id: p.native_id ?? s.native_id } : s,
+      );
       return next;
     }
-    case "task_created": {
-      next.tasks = [p.task, ...snap.tasks.filter((t) => t.id !== p.task.id)];
+    case "attention_raised": {
+      const item = {
+        id: p.attention_id,
+        session_id: p.session_id ?? null,
+        run_id: p.run_id ?? null,
+        workspace_id: p.workspace_id ?? "",
+        kind: p.kind,
+        status: "open" as const,
+        title: p.title ?? "",
+        body: p.body ?? "",
+        pending_action: p.pending_action ?? null,
+        choices: p.choices ?? [],
+        provider_request_ref: p.provider_request_ref ?? null,
+        expires_at: null,
+        expires_with_session: p.expires_with_session ?? false,
+        created_at: e.at,
+      };
+      next.attention = [item, ...snap.attention.filter((a) => a.id !== item.id)];
       return next;
     }
-    case "task_updated": {
-      next.tasks = snap.tasks.map((t) => (t.id === p.task.id ? p.task : t));
+    case "attention_status_changed": {
+      const id = p.attention_id as string;
+      next.attention = snap.attention.map((a) =>
+        a.id === id ? { ...a, status: p.to ?? a.status } : a,
+      );
       return next;
     }
+    case "artifact_registered":
+    case "observed_process_seen":
+    case "observed_process_gone":
+    case "run_started":
+    case "run_state_changed":
+    case "command_intent":
+    case "command_resolved":
+    case "resync_required":
+      return next;
     default:
       return next;
   }

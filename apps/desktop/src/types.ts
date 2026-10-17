@@ -22,35 +22,45 @@ export interface Usage {
 }
 
 export interface Capabilities {
-  send: Support;
-  steer: Support;
-  cancel: Support;
+  list_sessions: Support;
+  import_session: Support;
   resume: Support;
   fork: Support;
-  stream_output: Support;
-  structured_approval: Support;
-  structured_question: Support;
-  usage_report: Support;
-  artifacts: Support;
+  streaming: Support;
+  structured_approvals: Support;
+  structured_questions: Support;
+  cancel: Support;
+  mid_turn_steer: Support;
+  reconnect: Support;
+  usage_reporting: Support;
+  artifact_reporting: Support;
 }
 
+const UNKNOWN: Support = { status: "unknown" };
+
 export const UNKNOWN_CAPABILITIES: Capabilities = {
-  send: { type: "unknown" },
-  steer: { type: "unknown" },
-  cancel: { type: "unknown" },
-  resume: { type: "unknown" },
-  fork: { type: "unknown" },
-  stream_output: { type: "unknown" },
-  structured_approval: { type: "unknown" },
-  structured_question: { type: "unknown" },
-  usage_report: { type: "unknown" },
-  artifacts: { type: "unknown" },
+  list_sessions: UNKNOWN,
+  import_session: UNKNOWN,
+  resume: UNKNOWN,
+  fork: UNKNOWN,
+  streaming: UNKNOWN,
+  structured_approvals: UNKNOWN,
+  structured_questions: UNKNOWN,
+  cancel: UNKNOWN,
+  mid_turn_steer: UNKNOWN,
+  reconnect: UNKNOWN,
+  usage_reporting: UNKNOWN,
+  artifact_reporting: UNKNOWN,
 };
 
 export type Support =
-  | { type: "supported"; constraint?: string }
-  | { type: "unsupported"; reason?: string }
-  | { type: "unknown" };
+  | { status: "supported"; constraint?: string | null }
+  | { status: "unsupported"; reason: string }
+  | { status: "unknown" };
+
+export function isSupported(s: Support | undefined | null): boolean {
+  return s?.status === "supported";
+}
 
 export interface Session {
   id: Id;
@@ -67,6 +77,7 @@ export interface Session {
   pid: number | null;
   last_meaningful_update: string | null;
   usage: Usage | null;
+  process_started_at: string | null;
   last_event_seq: number;
   created_at: string;
   updated_at: string;

@@ -1,3 +1,4 @@
+import { CircleHelp, FileSearch, ShieldAlert, TriangleAlert, Wand2 } from "lucide-react";
 import { answerAttention, dismissAttention, useCommand, type Answer } from "../api";
 import type { AttentionItem, Snapshot } from "../types";
 import { useState } from "react";
@@ -10,6 +11,17 @@ const KIND_LABEL: Record<string, string> = {
   uncertain_outcome: "Uncertain outcome",
   inferred_prompt: "Possible prompt (inferred)",
 };
+
+function KindIcon({ kind }: { kind: string }) {
+  const props = { size: 12, strokeWidth: 2.2 };
+  switch (kind) {
+    case "approval": return <ShieldAlert {...props} />;
+    case "question": return <CircleHelp {...props} />;
+    case "review_request": return <FileSearch {...props} />;
+    case "inferred_prompt": return <Wand2 {...props} />;
+    default: return <TriangleAlert {...props} />;
+  }
+}
 
 export function InboxView({ snap }: { snap: Snapshot }) {
   const open = snap.attention.filter((a) => a.status === "open");
@@ -50,7 +62,7 @@ function AttentionCard({ a, snap }: { a: AttentionItem; snap: Snapshot }) {
   return (
     <div className={`card att-card ${a.status !== "open" ? "dim" : ""}`}>
       <div className="head">
-        <span className={`kind ${a.kind}`}>{KIND_LABEL[a.kind] ?? a.kind}</span>
+        <span className={`kind ${a.kind}`}><KindIcon kind={a.kind} />{KIND_LABEL[a.kind] ?? a.kind}</span>
         <span className="title">{a.title}</span>
         {session && <span className="chip">{session.title}</span>}
       </div>

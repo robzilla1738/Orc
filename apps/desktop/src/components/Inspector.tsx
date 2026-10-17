@@ -1,3 +1,4 @@
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useTranscript } from "../api";
 import { useUi } from "../store";
 import type { Session, Snapshot } from "../types";
@@ -10,8 +11,10 @@ export function Inspector({ snap }: { snap: Snapshot }) {
 
   if (!inspectorOpen) {
     return (
-      <div style={{ padding: 12 }}>
-        <button className="pill ghost small" onClick={toggleInspector} title="Show inspector">◂</button>
+      <div style={{ padding: 14 }}>
+        <button className="pill ghost icon" onClick={toggleInspector} title="Show inspector">
+          <PanelRightOpen size={16} />
+        </button>
       </div>
     );
   }
@@ -20,7 +23,9 @@ export function Inspector({ snap }: { snap: Snapshot }) {
     <div className="inspector">
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="sec-label" style={{ flex: 1 }}>Inspector</div>
-        <button className="pill ghost small" onClick={toggleInspector}>▸</button>
+        <button className="pill ghost icon" onClick={toggleInspector}>
+          <PanelRightClose size={16} />
+        </button>
       </div>
       {!session ? (
         <div style={{ color: "var(--ink-3)", fontSize: "var(--fs-s)" }}>
@@ -49,13 +54,18 @@ function Details({ s, transcript, loading }: { s: Session; transcript: string; l
 
       <div>
         <div className="sec-label">Capabilities</div>
-        <Cap k="send" v={s.capabilities.send} />
-        <Cap k="steer" v={s.capabilities.steer} />
+        <Cap k="send / steer" v={s.capabilities.mid_turn_steer} />
         <Cap k="cancel" v={s.capabilities.cancel} />
         <Cap k="resume" v={s.capabilities.resume} />
-        <Cap k="approvals" v={s.capabilities.structured_approval} />
-        <Cap k="questions" v={s.capabilities.structured_question} />
-        <Cap k="usage" v={s.capabilities.usage_report} />
+        <Cap k="fork" v={s.capabilities.fork} />
+        <Cap k="reconnect" v={s.capabilities.reconnect} />
+        <Cap k="streaming" v={s.capabilities.streaming} />
+        <Cap k="approvals" v={s.capabilities.structured_approvals} />
+        <Cap k="questions" v={s.capabilities.structured_questions} />
+        <Cap k="usage" v={s.capabilities.usage_reporting} />
+        <Cap k="artifacts" v={s.capabilities.artifact_reporting} />
+        <Cap k="list" v={s.capabilities.list_sessions} />
+        <Cap k="import" v={s.capabilities.import_session} />
       </div>
 
       {s.usage && (
@@ -81,9 +91,9 @@ function Kv({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Cap({ k, v }: { k: string; v: { type: string; reason?: string; constraint?: string } }) {
-  const label = v.type === "supported" ? "yes" : v.type === "unsupported" ? "no" : "?";
-  const color = v.type === "supported" ? "var(--good)" : v.type === "unsupported" ? "var(--ink-3)" : "var(--warn)";
+function Cap({ k, v }: { k: string; v: { status: string; reason?: string; constraint?: string | null } }) {
+  const label = v.status === "supported" ? "yes" : v.status === "unsupported" ? "no" : "?";
+  const color = v.status === "supported" ? "var(--good)" : v.status === "unsupported" ? "var(--ink-3)" : "var(--warn)";
   return (
     <div className="kv">
       <span className="k">{k}</span>

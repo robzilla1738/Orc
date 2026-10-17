@@ -17,11 +17,15 @@ export interface Transport {
 declare global {
   interface Window {
     __TAURI__?: unknown;
+    __TAURI_INTERNALS__?: unknown;
   }
 }
 
 export function inTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window;
+  // Tauri 2 injects __TAURI_INTERNALS__ (the IPC bridge) unconditionally;
+  // __TAURI__ only exists with app.withGlobalTauri enabled.
+  return typeof window !== "undefined" &&
+    ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
 }
 
 class TauriTransport implements Transport {
@@ -71,13 +75,17 @@ const demoSession = (id: string, title: string, state: Session["state"], provide
   status_detail: null,
   capabilities: {
     ...UNKNOWN_CAPABILITIES,
-    send: { type: "supported" },
-    cancel: { type: "supported" },
-    resume: { type: "supported" },
+    mid_turn_steer: { status: "supported" },
+    cancel: { status: "supported" },
+    resume: { status: "supported" },
+    structured_approvals: { status: "supported" },
+    structured_questions: { status: "supported" },
+    streaming: { status: "supported" },
   },
   pid: 1234,
   last_meaningful_update: "wrote crates/runtime/src/controller.rs",
   usage: null,
+  process_started_at: null,
   last_event_seq: 0,
   created_at: new Date(Date.now() - 8 * 60000).toISOString(),
   updated_at: new Date().toISOString(),
